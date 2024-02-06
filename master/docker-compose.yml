@@ -1,0 +1,44 @@
+version: '3.7'
+services:
+  postgres_master:
+    container_name: postgres_master_cont
+    image: "postgres:15"
+    restart: 'no'
+    environment:
+      - POSTGRES_DB=version_db
+      - POSTGRES_USER=version_user
+      - POSTGRES_PASSWORD=version_password
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data    
+      - ./start_db_script:/docker-entrypoint-initdb.d/
+      - type: bind
+        source: postgresql.conf
+        target: /var/lib/postgresql/data/postgresql.conf
+      - type: bind
+        source: pg_hba.conf
+        target: /var/lib/postgresql/data/pg_hba.conf
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        tag: "{{.ImageName}}|{{.Name}}"
+    ports:
+      - 5432:5432   
+
+
+    networks:
+      default:
+        ipv4_address: 10.18.13.2
+ 
+  postgres_dump:
+    container_name: postgres_dump_cont
+    image: "postgres:15"
+    restart: 'no' 
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+networks:
+  default:
+    external: true
+    name: postgres
