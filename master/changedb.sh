@@ -1,7 +1,7 @@
 #!/bin/bash 
-docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c 'create publication db_pub for all tables;'"
-docker exec postgres_slave_cont /bin/sh -c "psql -At -U version_user version_db -c \"create subscription db_sub connection 'host=10.18.13.2 dbname=version_db user=version_user password=version_password' publication db_pub;\""
-
+docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c \"create user rep_user replication login encrypted password '123';\""
+sleep 3
+docker exec postgres_slave_cont /bin/sh -c "rm -rf /var/lib/postgresql/data/*; pg_basebackup  --host=10.18.13.2 --username=rep_user -Fp -Xs -P -R -D /var/lib/postgresql/data"
 
 
 # docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c \"INSERT INTO versions (minor, major, build, released) VALUES (3, 2, 80, '2024-02-04');\""

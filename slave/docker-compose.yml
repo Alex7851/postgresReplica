@@ -3,7 +3,7 @@ services:
   postgres_slave:
     container_name: postgres_slave_cont
     image: "postgres:15"
-    restart: 'no'
+    restart: 'unless-stopped'
     extra_hosts:
       - master.host:10.18.13.2
     environment:
@@ -12,10 +12,10 @@ services:
       - POSTGRES_PASSWORD=version_password
     volumes:
       - ./data/postgres:/var/lib/postgresql/data    
-      - ./start_db_script:/docker-entrypoint-initdb.d/
       - type: bind
         source: postgresql.conf
-        target: /var/lib/postgresql/data/postgresql.conf
+        target: /etc/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql.conf
     logging:
       driver: "json-file"
       options:
@@ -25,7 +25,6 @@ services:
     ports:
       - 5545:5432
         
-
     networks:
       default:
         ipv4_address: 10.18.13.3
