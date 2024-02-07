@@ -1,6 +1,6 @@
 #!/bin/bash 
-# docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c 'create publication db_pub for all tables;'"
-# docker exec postgres_slave_cont /bin/sh -c "psql -At -U version_user version_db -c \"create subscription db_sub connection 'host=10.18.13.2 dbname=version_db user=version_user password=version_password' publication db_pub;\""
+docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c 'create publication db_pub for all tables;'"
+docker exec postgres_slave_cont /bin/sh -c "psql -At -U version_user version_db -c \"create subscription db_sub connection 'host=10.18.13.2 dbname=version_db user=version_user password=version_password' publication db_pub;\""
 
 
 
@@ -13,7 +13,7 @@
 # 	for i in {1..200} ; do
 # 	    string="'"$(echo -n "${chars:RANDOM%${#chars}:200}")"'"
 # 	done
-docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c \"INSERT INTO versions_description (version_id, descrption) VALUES (12, 'тест');\""
+# docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c \"INSERT INTO versions_description (version_id, descrption) VALUES (12, 'тест');\""
 
 # done
 
