@@ -1,5 +1,5 @@
 #!/bin/bash 
-docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c \"CREATE ROLE rep_user WITH LOGIN REPLICATION PASSWORD '123';\""
+docker exec postgres_master_cont /bin/sh -c "psql -At -U version_user version_db -c \"CREATE ROLE rep_user WITH LOGIN REPLICATION PASSWORD 'fd674vfddQPDsssvfcds749';\""
 # sleep 3
 # docker exec postgres_slave_cont /bin/sh -c "rm -rf /var/lib/postgresql/data/*; pg_basebackup  --host=10.18.13.2 --username=rep_user -Fp -Xs -P -R -D /var/lib/postgresql/data"
 

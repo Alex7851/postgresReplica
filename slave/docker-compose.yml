@@ -4,8 +4,6 @@ services:
     container_name: postgres_slave_cont
     image: "postgres:15"
     restart: 'unless-stopped'
-    extra_hosts:
-      - master.host:10.18.13.2
     environment:
       - POSTGRES_DB=version_db
       - POSTGRES_USER=version_user
@@ -21,7 +19,7 @@ services:
       if [ ! -f /var/lib/postgresql/data/standby.signal ]; then
         echo 'Master is ready. Taking base backup...';
         rm -rf /var/lib/postgresql/data/*;
-        export PGPASSWORD='123' && pg_basebackup -h 10.18.13.2 -U rep_user -D /var/lib/postgresql/data -Fp -Xs -R;
+        export PGPASSWORD='fd674vfddQPDsssvfcds749' && pg_basebackup -h 10.18.13.2 -p 5432 -U rep_user -D /var/lib/postgresql/data -Fp -Xs -R;
         echo 'Backup complete. Starting PostgreSQL as standby...';
       fi
       exec docker-entrypoint.sh postgres -c 'hot_standby=on'
@@ -34,6 +32,11 @@ services:
         tag: "{{.ImageName}}|{{.Name}}"
     ports:
       - 5545:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready  -U version_user -d version_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5   
     networks:
       default:
         ipv4_address: 10.18.13.3
