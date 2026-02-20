@@ -12,10 +12,20 @@ services:
       - POSTGRES_PASSWORD=version_password
     volumes:
       - ./data/postgres:/var/lib/postgresql/data    
-      - type: bind
-        source: postgresql.conf
-        target: /etc/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql.conf
+    command: |
+      bash -c "
+      until pg_isready -h 10.18.13.2 -U rep_user; do
+        echo 'Waiting for master...';
+        sleep 5;
+      done;
+      if [ ! -f /var/lib/postgresql/data/standby.signal ]; then
+        echo 'Master is ready. Taking base backup...';
+        rm -rf /var/lib/postgresql/data/*;
+        export PGPASSWORD='123' && pg_basebackup -h 10.18.13.2 -U rep_user -D /var/lib/postgresql/data -Fp -Xs -R;
+        echo 'Backup complete. Starting PostgreSQL as standby...';
+      fi
+      exec docker-entrypoint.sh postgres -c 'hot_standby=on'
+      "
     logging:
       driver: "json-file"
       options:
@@ -24,7 +34,6 @@ services:
         tag: "{{.ImageName}}|{{.Name}}"
     ports:
       - 5545:5432
-        
     networks:
       default:
         ipv4_address: 10.18.13.3

@@ -39,15 +39,55 @@ psql -U version_user version_db
 rm -rf /var/lib/postgresql/data/*
 pg_basebackup  --host=10.18.13.2 --username=rep_user -Fp -Xs -P -R -D /var/lib/postgresql/data
 
+
 -----------------
 
 Практическое руководство
 
 1)Убедиться что папка data удалена у обоих сервисов
 2)Удалить контейнеры
-3)Закомментить байнды в компосе мастера
-4)Запустить оба сервиса
-6)Раскомментить байнд у мастера
-7)Перезапустить мастер
-8)Запустить changedb скрипт с раскомменченными строками создания пользователя(мастер), задержки, удаления папки с бд и командой репликации (слейв)
-9)Дождаться перезапуска слейва после кода ноль
+3)Закомментить байнд в компосе мастера
+4)Запустить мастер
+5)Запустить changedb скрипт с раскомменченной строкой создания пользователя(мастер)
+6)Запустить слейв
+
+
+Скрипт создания таблицы для проверки репликации:
+
+-----------------------------------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS users (
+    id              SERIAL PRIMARY KEY, -- Автоинкрементный уникальный ID, первичный ключ.
+                                        -- Альтернатива для PG10+: id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    username        VARCHAR(50) UNIQUE NOT NULL, -- Имя пользователя, уникальное и обязательное.
+    email           VARCHAR(255) UNIQUE NOT NULL, -- Email, уникальный и обязательный.
+    password_hash   VARCHAR(255) NOT NULL, -- Хеш пароля (никогда не храните пароли в открытом виде!).
+    is_active       BOOLEAN DEFAULT TRUE, -- Флаг активности пользователя.
+    created_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, -- Дата и время создания записи, с учетом временной зоны.
+    updated_at      TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP -- Дата и время последнего обновления.
+);
+
+-- Добавление комментария к таблице (не обязательно, но хорошая практика)
+COMMENT ON TABLE users IS 'Таблица для хранения информации о пользователях системы';
+COMMENT ON COLUMN users.username IS 'Уникальное имя пользователя для входа';
+COMMENT ON COLUMN users.email IS 'Уникальный адрес электронной почты пользователя';
+
+-- Опционально: Создание функции и триггера для автоматического обновления updated_at
+-- Это гарантирует, что поле updated_at будет обновляться при каждом изменении строки.
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER update_users_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Пример вставки данных (для демонстрации)
+INSERT INTO users (username, email, password_hash) VALUES
+('john_doe', 'john.doe@example.com', 'some_hashed_password_1'),
+('jane_smith', 'jane.smith@example.com', 'some_hashed_password_2');
+-------------------------------------------------------------------------------------------------------------------
